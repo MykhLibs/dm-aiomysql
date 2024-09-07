@@ -1,14 +1,14 @@
 import os
-from typing import TypeVar, Callable, Awaitable, Optional, Union
+from typing import TypeVar, Callable, Optional, Union
 from decimal import Decimal
-from mysql.connector.aio import connect as AsyncMysqlConnector
+from mysql.connector import connect as MysqlConnector
 from dm_logger import DMLogger
 
 LB = TypeVar("LB", list, bool)
 LD = TypeVar("LD", list, dict)
 
 
-class DMAioMysqlClient:
+class DMMysqlClient:
     _logger = None
 
     def __init__(
@@ -30,7 +30,7 @@ class DMAioMysqlClient:
             "database": database
         }
 
-    async def query(
+    def query(
         self,
         query: str,
         params: Union[list, tuple] = None,
@@ -38,30 +38,30 @@ class DMAioMysqlClient:
         dict_results: bool = True,
         commit: bool = False
     ) -> LB:
-        async def callback(connection: AsyncMysqlConnector) -> LB:
+        def callback(connection: MysqlConnector) -> LB:
             try:
-                cursor = await connection.cursor(dictionary=dict_results)
-                await cursor.execute(query, params)
+                cursor = connection.cursor(dictionary=dict_results)
+                cursor.execute(query, params)
                 if commit:
-                    await connection.commit()
+                    connection.commit()
                     return True
-                results = await cursor.fetchall()
+                results = cursor.fetchall()
                 results = self._convert_decimal_to_float(results)
                 return results
             except Exception as e:
                 self._logger.error(f"Query error: {e}")
             return False if commit else {} if dict_results else []
 
-        return await self._execute(callback) or False
+        return self.execute(callback) or False
 
-    async def insert_one(
+    def insert_one(
         self,
         table_name: str,
         data: dict
     ) -> bool:
-        return await self.insert_many(table_name, data=[data])
+        return self.insert_many(table_name, data=[data])
 
-    async def insert_many(
+    def insert_many(
         self,
         table_name: str,
         data: list[dict]
@@ -72,25 +72,25 @@ class DMAioMysqlClient:
         query = f"INSERT INTO `{table_name}` ({columns}) VALUES ({values_mask})"
         values = [list(item.values()) for item in data]
 
-        async def callback(connection: AsyncMysqlConnector) -> bool:
+        def callback(connection: MysqlConnector) -> bool:
             try:
-                cursor = await connection.cursor(dictionary=True)
-                await cursor.executemany(query, values)
-                await connection.commit()
+                cursor = connection.cursor(dictionary=True)
+                cursor.executemany(query, values)
+                connection.commit()
                 return True
             except Exception as e:
                 self._logger.error(f"Query error: {e}")
-            return False
+                return False
 
-        return await self._execute(callback) or False
+        return self.execute(callback) or False
 
-    async def _execute(
+    def execute(
         self,
-        callback: Callable[[AsyncMysqlConnector], Awaitable[LB]]
+        callback: Callable[[MysqlConnector], LB]
     ) -> Optional[LB]:
         try:
-            async with await AsyncMysqlConnector(**self._mysql_config) as connection:
-                return await callback(connection)
+            with MysqlConnector(**self._mysql_config) as connection:
+                return callback(connection)
         except Exception as e:
             self._logger.error(f"Callback error: {e}")
         return None
@@ -126,7 +126,7 @@ class DMAioMysqlClient:
             print("Invalid logger")
 
 
-class DMAioEnvMysqlClient(DMAioMysqlClient):
+class DMEnvMysqlClient(DMMysqlClient):
     def __init__(self, env_prefix: str = "MYSQL"):
         env_prefix = env_prefix or "MYSQL"
         host = os.getenv(f"{env_prefix}_HOST", "127.0.0.1")

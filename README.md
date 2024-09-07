@@ -5,6 +5,8 @@
 * [PyPI](https://pypi.org/project/dm-aiomysql)
 * [GitHub](https://github.com/MykhLibs/dm-aiomysql)
 
+### * Package contains both `asynchronous` and `synchronous` clients
+
 ## Usage
 
 ### Run in Windows
@@ -20,6 +22,8 @@ if sys.platform == "win32":
 ```
 
 ### Example of using DMAioMysqlClient
+
+Analogue to `DMAioMysqlClient` is the synchronous client `DMMysqlClient`.
 
 ```python
 from dm_aiomysql import DMAioMysqlClient
@@ -61,6 +65,8 @@ if __name__ == "__main__":
 But the connection parameters are loaded from the **ENV** variables.
 
 **_The client will not be created until all ENV variables are set._**
+
+Analogue to `DMAioEnvMysqlClient` is the synchronous client `DMEnvMysqlClient`.
 
 ```python
 from dm_aiomysql import DMAioEnvMysqlClient
