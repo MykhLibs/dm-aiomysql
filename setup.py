@@ -26,7 +26,7 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent'
     ],
-    keywords='dm aiomodbus',
+    keywords='dm aiomysql',
     project_urls={
         'GitHub': 'https://github.com/MykhLibs/dm-aiomysql'
     },
