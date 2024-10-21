@@ -17,9 +17,9 @@ setup(
     url='https://pypi.org/project/dm-aiomysql',
     packages=find_packages(),
     install_requires=[
-        'dm-logger==0.5.2',
-        'python-dotenv==1.0.1',
-        'mysql-connector-python==9.0.0',
+        'dm-logger~=0.5.2',
+        'python-dotenv>=1.0.0',
+        'mysql-connector-python>=9.0.0, <10.0.0'
     ],
     classifiers=[
         'Programming Language :: Python :: 3.8',
