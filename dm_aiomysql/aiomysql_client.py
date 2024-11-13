@@ -38,6 +38,8 @@ class DMAioMysqlClient:
         dict_results: bool = True,
         commit: bool = False
     ) -> LB:
+        error_return = False if commit else []
+
         async def callback(connection: AsyncMysqlConnector) -> LB:
             try:
                 cursor = await connection.cursor(dictionary=dict_results)
@@ -50,9 +52,9 @@ class DMAioMysqlClient:
                 return results
             except Exception as e:
                 self._logger.error(f"Query error: {e}")
-            return False if commit else {} if dict_results else []
+            return error_return
 
-        return await self._execute(callback) or False
+        return await self._execute(callback, error_return)
 
     async def insert_one(
         self,
@@ -82,18 +84,19 @@ class DMAioMysqlClient:
                 self._logger.error(f"Query error: {e}")
             return False
 
-        return await self._execute(callback) or False
+        return await self._execute(callback)
 
     async def _execute(
         self,
-        callback: Callable[[AsyncMysqlConnector], Awaitable[LB]]
+        callback: Callable[[AsyncMysqlConnector], Awaitable[LB]],
+        error_return: LB = False
     ) -> Optional[LB]:
         try:
             async with await AsyncMysqlConnector(**self._mysql_config) as connection:
                 return await callback(connection)
         except Exception as e:
             self._logger.error(f"Callback error: {e}")
-        return None
+        return error_return
 
     @staticmethod
     def _convert_decimal_to_float(results: LD) -> LD:

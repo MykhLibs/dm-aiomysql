@@ -38,6 +38,8 @@ class DMMysqlClient:
         dict_results: bool = True,
         commit: bool = False
     ) -> LB:
+        error_return = False if commit else []
+
         def callback(connection: MysqlConnector) -> LB:
             try:
                 cursor = connection.cursor(dictionary=dict_results)
@@ -50,9 +52,9 @@ class DMMysqlClient:
                 return results
             except Exception as e:
                 self._logger.error(f"Query error: {e}")
-            return False if commit else {} if dict_results else []
+            return error_return
 
-        return self.execute(callback) or False
+        return self._execute(callback, error_return)
 
     def insert_one(
         self,
@@ -80,20 +82,21 @@ class DMMysqlClient:
                 return True
             except Exception as e:
                 self._logger.error(f"Query error: {e}")
-                return False
+            return False
 
-        return self.execute(callback) or False
+        return self._execute(callback)
 
-    def execute(
+    def _execute(
         self,
-        callback: Callable[[MysqlConnector], LB]
+        callback: Callable[[MysqlConnector], LB],
+        error_return: LB = False
     ) -> Optional[LB]:
         try:
             with MysqlConnector(**self._mysql_config) as connection:
                 return callback(connection)
         except Exception as e:
             self._logger.error(f"Callback error: {e}")
-        return None
+        return error_return
 
     @staticmethod
     def _convert_decimal_to_float(results: LD) -> LD:
