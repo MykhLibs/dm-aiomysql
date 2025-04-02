@@ -9,7 +9,7 @@ LD = TypeVar("LD", list, dict)
 
 
 class DMMysqlClient:
-    _logger = None
+    _logger_params = None
 
     def __init__(
         self,
@@ -19,9 +19,7 @@ class DMMysqlClient:
         password: str = "",
         database: str = "",
     ) -> None:
-        if self._logger is None:
-            self._logger = DMLogger(self.__class__.__name__)
-
+        self._set_logger()
         self._mysql_config = {
             "host": host,
             "port": int(port),
@@ -116,20 +114,21 @@ class DMMysqlClient:
                 new_results.append(new_row)
         return new_results
 
+    def _set_logger(self) -> None:
+        params = {"name": self.__class__.__name__}
+        if isinstance(self._logger_params, dict):
+            params.update(self._logger_params)
+        self._logger = DMLogger(**params)
+
     @classmethod
-    def set_logger(cls, logger) -> None:
-        if (
-            hasattr(logger, "debug") and callable(logger.debug) and
-            hasattr(logger, "info") and callable(logger.info) and
-            hasattr(logger, "warning") and callable(logger.warning) and
-            hasattr(logger, "error") and callable(logger.error)
-        ):
-            cls._logger = logger
-        else:
-            print("Invalid logger")
+    def set_logger_params(cls, extra_params = None) -> None:
+        if isinstance(extra_params, dict) or extra_params is None:
+            cls._logger_params = extra_params
 
 
 class DMEnvMysqlClient(DMMysqlClient):
+    _logger_params = None
+
     def __init__(self, env_prefix: str = "MYSQL"):
         env_prefix = env_prefix or "MYSQL"
         host = os.getenv(f"{env_prefix}_HOST", "127.0.0.1")
@@ -139,10 +138,11 @@ class DMEnvMysqlClient(DMMysqlClient):
         database = os.getenv(f"{env_prefix}_DATABASE", "")
 
         if not (host and port and username and password and database):
-            self._logger = DMLogger(self.__class__.__name__)
+            self._set_logger()
             self._logger.critical(f"{env_prefix} env variables not set! Set env variables: "
                                   f"{env_prefix}_HOST, {env_prefix}_PORT, {env_prefix}_USERNAME, "
                                   f"{env_prefix}_PASSWORD, {env_prefix}_DATABASE")
             exit(-55)
 
         super().__init__(host, port, username, password, database)
+        self._set_logger()

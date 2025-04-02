@@ -86,27 +86,20 @@ custom_mysql_client = DMAioEnvMysqlClient(env_prefix="PROD_MYSQL")  # by default
 
 ### Set custom logger
 
-_If you want set up custom logger_
-
 ```python
-from dm_aiomysql import DMAioMysqlClient
-
-
-# create custom logger
-class MyLogger:
-    def debug(self, message):
-        pass
-
-    def info(self, message):
-        pass
-
-    def warning(self, message):
-        print(message)
-
-    def error(self, message):
-        print(message)
+from dm_aiomysql import DMEnvMysqlClient
+from dm_logger import FormatterConfig
 
 
 # set up custom logger for all clients
-DMAioMysqlClient.set_logger(MyLogger())
+DMEnvMysqlClient.set_logger_params(
+   {
+      "name": "my_name",
+      "formatter_config": FormatterConfig(
+         show_datetime=False,
+      )
+   }
+)
 ```
+
+See more about DMLogger [here](https://github.com/MykhLibs/dm-logger)
